@@ -4,6 +4,8 @@ server {
     server_name localhost;
     listen <%= ENV['PORT'] %>;
     charset utf-8;
+    modsecurity on;
+    modsecurity_rules_file /app/metabase_rules.txt;
     location /auth/login {
         limit_req zone=login_zone burst=3;
         proxy_pass <%= ENV["UPSTREAM_URL"] %>;
