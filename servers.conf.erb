@@ -1,8 +1,32 @@
+# Increase default size to allow multiple server blocks
+server_names_hash_bucket_size 128;
+
+###########################################
+# Default server
+###########################################
+
+server {
+    server_name localhost default_server;
+    listen <%= ENV["PORT"] %>;
+    charset utf-8;
+
+    location / {
+        return 200 "Ok";
+        add_header Content-Type text/plain;
+    }
+}
+
+
+###########################################
+# Metabase
+###########################################
+
+# Rate limit on login
 limit_req_zone "login_limit" zone=login_zone:1m rate=1r/s;
 
 server {
-    server_name localhost;
-    listen <%= ENV['PORT'] %>;
+    server_name <%= ENV["METABASE_HOST"] %>;
+    listen <%= ENV["PORT"] %>;
     charset utf-8;
 
     # Enable modsecurity
@@ -29,3 +53,7 @@ server {
     }
 }
 
+
+###########################################
+# Webapp
+###########################################
