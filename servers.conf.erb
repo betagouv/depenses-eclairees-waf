@@ -22,7 +22,7 @@ server {
 ###########################################
 
 # Rate limit on login
-limit_req_zone "login_limit" zone=login_zone:1m rate=1r/s;
+limit_req_zone "metabase_login_limit" zone=metabase_login_zone:1m rate=1r/s;
 
 server {
     server_name <%= ENV["METABASE_HOST"] %>;
@@ -43,12 +43,12 @@ server {
 
     location /auth/login {
         # Rate limit auth endpoint
-        limit_req zone=login_zone burst=3;
-        proxy_pass <%= ENV["UPSTREAM_URL"] %>;
+        limit_req zone=metabase_login_zone burst=3;
+        proxy_pass <%= ENV["METABASE_UPSTREAM_URL"] %>;
         proxy_redirect default;
     }
     location / {
-        proxy_pass <%= ENV["UPSTREAM_URL"] %>;
+        proxy_pass <%= ENV["METABASE_UPSTREAM_URL"] %>;
         proxy_redirect default;
     }
 }
@@ -57,3 +57,35 @@ server {
 ###########################################
 # Webapp
 ###########################################
+
+# Rate limit on login
+limit_req_zone "webapp_login_limit" zone=webapp_login_zone:1m rate=1r/s;
+
+server {
+    server_name <%= ENV["WEBAPP_HOST"] %>;
+    listen <%= ENV["PORT"] %>;
+    charset utf-8;
+
+    # Enable modsecurity
+    modsecurity on;
+
+    # Force dns resolution to handle upstream ip changes
+    # See /etc/resolv.conf for default resolver ip
+    resolver 127.0.0.11 valid=10s;
+
+    # Proxy headers
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+    location <%= ENV["WEBAPP_ADMIN_LOGIN_PATH"] %> {
+        # Rate limit auth endpoint
+        limit_req zone=webapp_login_zone burst=3;
+        proxy_pass <%= ENV["WEBAPP_UPSTREAM_URL"] %>;
+        proxy_redirect default;
+    }
+    location / {
+        proxy_pass <%= ENV["WEBAPP_UPSTREAM_URL"] %>;
+        proxy_redirect default;
+    }
+}
+
