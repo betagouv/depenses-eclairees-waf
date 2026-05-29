@@ -1,6 +1,11 @@
 # Increase default size to allow multiple server blocks
 server_names_hash_bucket_size 128;
 
+# Force dns resolution to handle upstream ip changes
+# See /etc/resolv.conf for default resolver ip
+resolver 127.0.0.11 valid=5s ipv6=off;
+
+
 ###########################################
 # Default server
 ###########################################
@@ -24,6 +29,13 @@ server {
 # Rate limit on login
 limit_req_zone "metabase_login_limit" zone=metabase_login_zone:1m rate=1r/s;
 
+# Upstream
+upstream metabase_backend {
+    server <%= ENV["METABASE_UPSTREAM_SERVER"] %> resolve;
+    keepalive 16;
+    zone metabase_backend 64k;
+}
+
 server {
     server_name <%= ENV["METABASE_HOST"] %>;
     listen <%= ENV["PORT"] %>;
@@ -33,9 +45,9 @@ server {
     modsecurity on;
     modsecurity_rules_file /app/metabase_rules.txt;
 
-    # Force dns resolution to handle upstream ip changes
-    # See /etc/resolv.conf for default resolver ip
-    resolver 127.0.0.11 valid=10s;
+    # Performances improvment
+    proxy_http_version 1.1;
+    proxy_set_header Connection "";
 
     # Proxy headers
     proxy_set_header X-Real-IP $remote_addr;
@@ -44,11 +56,11 @@ server {
     location /auth/login {
         # Rate limit auth endpoint
         limit_req zone=metabase_login_zone burst=3;
-        proxy_pass <%= ENV["METABASE_UPSTREAM_URL"] %>;
+        proxy_pass http://metabase_backend;
         proxy_redirect default;
     }
     location / {
-        proxy_pass <%= ENV["METABASE_UPSTREAM_URL"] %>;
+        proxy_pass http://metabase_backend;
         proxy_redirect default;
     }
 }
@@ -61,6 +73,13 @@ server {
 # Rate limit on login
 limit_req_zone "webapp_login_limit" zone=webapp_login_zone:1m rate=1r/s;
 
+# Upstream
+upstream webapp_backend {
+    server <%= ENV["WEBAPP_UPSTREAM_SERVER"] %> resolve;
+    keepalive 16;
+    zone webapp_backend 64k;
+}
+
 server {
     server_name <%= ENV["WEBAPP_HOST"] %>;
     listen <%= ENV["PORT"] %>;
@@ -69,9 +88,9 @@ server {
     # Enable modsecurity
     modsecurity on;
 
-    # Force dns resolution to handle upstream ip changes
-    # See /etc/resolv.conf for default resolver ip
-    resolver 127.0.0.11 valid=10s;
+    # Performances improvment
+    proxy_http_version 1.1;
+    proxy_set_header Connection "";
 
     # Proxy headers
     proxy_set_header X-Forwarded-Host $host;
@@ -82,11 +101,11 @@ server {
     location <%= ENV["WEBAPP_ADMIN_LOGIN_PATH"] %> {
         # Rate limit auth endpoint
         limit_req zone=webapp_login_zone burst=3;
-        proxy_pass <%= ENV["WEBAPP_UPSTREAM_URL"] %>;
+        proxy_pass http://webapp_backend;
         proxy_redirect default;
     }
     location / {
-        proxy_pass <%= ENV["WEBAPP_UPSTREAM_URL"] %>;
+        proxy_pass http://webapp_backend;
         proxy_redirect default;
     }
 }
