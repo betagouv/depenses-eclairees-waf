@@ -7,10 +7,18 @@ SecRule REQUEST_URI "@beginsWith /api/" \
     ctl:ruleRemoveById=911100"
 
 # Deactivate sql injection
-SecRule REQUEST_URI "@beginsWith /api/" \
+SecRule REQUEST_URI "@beginsWith /api/dataset" \
     "id:1002,\
     phase:1,\
     pass,\
     nolog,\
     ctl:ruleRemoveById=942000-942999"
+
+# Deactivate php application attack
+SecRule REQUEST_URI "@beginsWith /api/dataset" \
+    "id:1003,\
+    phase:1,\
+    pass,\
+    nolog,\
+    ctl:ruleRemoveById=933000-933999"
 
