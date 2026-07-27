@@ -67,21 +67,21 @@ server {
 
 
 ###########################################
-# Webapp
+# Webapp depec
 ###########################################
 
 # Rate limit on login
-limit_req_zone "webapp_login_limit" zone=webapp_login_zone:1m rate=1r/s;
+limit_req_zone "depec_web_login_limit" zone=depec_web_login_zone:1m rate=1r/s;
 
 # Upstream
-upstream webapp_backend {
-    server <%= ENV["WEBAPP_UPSTREAM_SERVER"] %> resolve;
+upstream depec_web_backend {
+    server <%= ENV["DEPEC_WEB_UPSTREAM_SERVER"] %> resolve;
     keepalive 16;
-    zone webapp_backend 64k;
+    zone depec_web_backend 64k;
 }
 
 server {
-    server_name <%= ENV["WEBAPP_HOST"] %>;
+    server_name <%= ENV["DEPEC_WEB_HOST"] %>;
     listen <%= ENV["PORT"] %>;
     charset utf-8;
 
@@ -98,14 +98,60 @@ server {
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto https;
 
-    location <%= ENV["WEBAPP_ADMIN_LOGIN_PATH"] %> {
+    location <%= ENV["DEPEC_WEB_ADMIN_LOGIN_PATH"] %> {
         # Rate limit auth endpoint
-        limit_req zone=webapp_login_zone burst=3;
-        proxy_pass http://webapp_backend;
+        limit_req zone=depec_web_login_zone burst=3;
+        proxy_pass http://depec_web_backend;
         proxy_redirect default;
     }
     location / {
-        proxy_pass http://webapp_backend;
+        proxy_pass http://depec_web_backend;
+        proxy_redirect default;
+    }
+}
+
+
+
+###########################################
+# Webapp gesec
+###########################################
+
+# Rate limit on login
+limit_req_zone "gesec_web_login_limit" zone=gesec_web_login_zone:1m rate=1r/s;
+
+# Upstream
+upstream gesec_web_backend {
+    server <%= ENV["GESEC_WEB_UPSTREAM_SERVER"] %> resolve;
+    keepalive 16;
+    zone gesec_web_backend 64k;
+}
+
+server {
+    server_name <%= ENV["GESEC_WEB_HOST"] %>;
+    listen <%= ENV["PORT"] %>;
+    charset utf-8;
+
+    # Enable modsecurity
+    modsecurity on;
+
+    # Performances improvment
+    proxy_http_version 1.1;
+    proxy_set_header Connection "";
+
+    # Proxy headers
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto https;
+
+    location <%= ENV["GESEC_WEB_ADMIN_LOGIN_PATH"] %> {
+        # Rate limit auth endpoint
+        limit_req zone=gesec_web_login_zone burst=3;
+        proxy_pass http://gesec_web_backend;
+        proxy_redirect default;
+    }
+    location / {
+        proxy_pass http://gesec_web_backend;
         proxy_redirect default;
     }
 }
