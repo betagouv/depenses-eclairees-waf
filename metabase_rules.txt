@@ -7,6 +7,7 @@ SecRule REQUEST_URI "@beginsWith /api/" \
     nolog,\
     ctl:ruleRemoveById=911100"
 
+
 # Edit question
 SecRule REQUEST_URI "@beginsWith /api/dataset" \
     "id:1002,\
@@ -19,9 +20,21 @@ SecRule REQUEST_URI "@beginsWith /api/dataset" \
     ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-PHP;ARGS:json.stages.array_0.native"
 
 
+# Download answer
+SecRule REQUEST_URI "@beginsWith /api/dataset" \
+    "id:1003,\
+    phase:1,\
+    t:none,\
+    pass,\
+    nolog,\
+    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-SQLI;ARGS:query,\
+    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-RCE;ARGS:query,\
+    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-PHP;ARGS:query"
+
+
 # Save question
 SecRule REQUEST_URI "@beginsWith /api/card" \
-    "id:1003,\
+    "id:1004,\
     phase:1,\
     t:none,\
     pass,\
