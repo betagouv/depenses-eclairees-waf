@@ -3,18 +3,20 @@
 Read `README.md` first for project context, architecture, environment
 variables and testing.
 
-## Adding an application block
+## Adding an application
 
-Copy an existing block (e.g. SFTP/GESEC) and keep the same structure:
+Add an entry to the `apps` array at the top of `servers.conf.erb`; the
+loop renders its rate limit, upstream and `server` block:
 
-1. `limit_req_zone` for the login endpoint.
-2. `upstream` with `resolve`, `keepalive 16`, and a `zone`.
-3. `server` with `server_name`, `listen`, `charset`.
-4. `modsecurity on;` and, if CRS breaks the app,
-   `modsecurity_rules_file /app/<app>_rules.txt;`.
-5. `proxy_http_version 1.1; proxy_set_header Connection "";` plus
-   `X-Forwarded-Host`, `X-Real-IP`, `X-Forwarded-For`, `X-Forwarded-Proto`.
-6. A rate-limited login `location` and a catch-all `location /`.
+1. `name` must be unique: it drives the `limit_req_zone`, `upstream`
+   and zone names.
+2. `title` is only the section banner comment.
+3. `host` and `upstream` come from `<APP>_HOST` and
+   `<APP>_UPSTREAM_SERVER`.
+4. `login_path` comes from `<APP>_ADMIN_LOGIN_PATH` or `<APP>_LOGIN_PATH`.
+5. `rules` is `<app>_rules.txt` when CRS breaks the app, else `nil`.
+
+Add defaults for any new env var to `test/render-config.sh`.
 
 ## Conventions
 

@@ -5,7 +5,52 @@ server_names_hash_bucket_size 128;
 # See /etc/resolv.conf for default resolver ip
 resolver 127.0.0.11 valid=5s ipv6=off;
 
-
+<%
+# One entry per proxied application. `name` must be unique: it drives the
+# limit_req_zone, upstream and zone names.
+apps = [
+    {
+        title: "Metabase",
+        name: "metabase",
+        host: ENV["METABASE_HOST"],
+        upstream: ENV["METABASE_UPSTREAM_SERVER"],
+        login_path: ENV["METABASE_LOGIN_PATH"],
+        rules: "metabase_rules.txt",
+    },
+    {
+        title: "DEPEC - WEBAPP",
+        name: "depec_web",
+        host: ENV["DEPEC_WEB_HOST"],
+        upstream: ENV["DEPEC_WEB_UPSTREAM_SERVER"],
+        login_path: ENV["DEPEC_WEB_ADMIN_LOGIN_PATH"],
+        rules: nil,
+    },
+    {
+        title: "GESEC - WEBAPP",
+        name: "gesec_web",
+        host: ENV["GESEC_WEB_HOST"],
+        upstream: ENV["GESEC_WEB_UPSTREAM_SERVER"],
+        login_path: ENV["GESEC_WEB_ADMIN_LOGIN_PATH"],
+        rules: nil,
+    },
+    {
+        title: "SFTP - WEBAPP",
+        name: "sftp_web",
+        host: ENV["SFTP_WEB_HOST"],
+        upstream: ENV["SFTP_WEB_UPSTREAM_SERVER"],
+        login_path: ENV["SFTP_WEB_ADMIN_LOGIN_PATH"],
+        rules: nil,
+    },
+    {
+        title: "N8N",
+        name: "n8n",
+        host: ENV["N8N_HOST"],
+        upstream: ENV["N8N_UPSTREAM_SERVER"],
+        login_path: ENV["N8N_LOGIN_PATH"],
+        rules: "n8n_rules.txt",
+    },
+]
+%>
 ###########################################
 # Default server
 ###########################################
@@ -20,73 +65,29 @@ server {
         add_header Content-Type text/plain;
     }
 }
-
+<% apps.each do |app| %>
 
 ###########################################
-# Metabase
+# <%= app[:title] %>
 ###########################################
 
 # Rate limit on login
-limit_req_zone "metabase_login_limit" zone=metabase_login_zone:1m rate=1r/s;
+limit_req_zone "<%= app[:name] %>_login_limit" zone=<%= app[:name] %>_login_zone:1m rate=1r/s;
 
 # Upstream
-upstream metabase_backend {
-    server <%= ENV["METABASE_UPSTREAM_SERVER"] %> resolve;
+upstream <%= app[:name] %>_backend {
+    server <%= app[:upstream] %> resolve;
     keepalive 16;
-    zone metabase_backend 64k;
+    zone <%= app[:name] %>_backend 64k;
 }
 
 server {
-    server_name <%= ENV["METABASE_HOST"] %>;
+    server_name <%= app[:host] %>;
     listen <%= ENV["PORT"] %>;
     charset utf-8;
 
     # Enable modsecurity
-    modsecurity on;
-    modsecurity_rules_file /app/metabase_rules.txt;
-
-    # Performance improvement
-    proxy_http_version 1.1;
-    proxy_set_header Connection "";
-
-    # Proxy headers
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-
-    location /auth/login {
-        # Rate limit auth endpoint
-        limit_req zone=metabase_login_zone burst=3;
-        proxy_pass http://metabase_backend;
-        proxy_redirect default;
-    }
-    location / {
-        proxy_pass http://metabase_backend;
-        proxy_redirect default;
-    }
-}
-
-
-###########################################
-# DEPEC - WEBAPP
-###########################################
-
-# Rate limit on login
-limit_req_zone "depec_web_login_limit" zone=depec_web_login_zone:1m rate=1r/s;
-
-# Upstream
-upstream depec_web_backend {
-    server <%= ENV["DEPEC_WEB_UPSTREAM_SERVER"] %> resolve;
-    keepalive 16;
-    zone depec_web_backend 64k;
-}
-
-server {
-    server_name <%= ENV["DEPEC_WEB_HOST"] %>;
-    listen <%= ENV["PORT"] %>;
-    charset utf-8;
-
-    # Enable modsecurity
-    modsecurity on;
+    modsecurity on;<%= app[:rules] ? "\n    modsecurity_rules_file /app/#{app[:rules]};" : "" %>
 
     # Performance improvement
     proxy_http_version 1.1;
@@ -98,152 +99,15 @@ server {
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto https;
 
-    location <%= ENV["DEPEC_WEB_ADMIN_LOGIN_PATH"] %> {
+    location <%= app[:login_path] %> {
         # Rate limit auth endpoint
-        limit_req zone=depec_web_login_zone burst=3;
-        proxy_pass http://depec_web_backend;
+        limit_req zone=<%= app[:name] %>_login_zone burst=3;
+        proxy_pass http://<%= app[:name] %>_backend;
         proxy_redirect default;
     }
     location / {
-        proxy_pass http://depec_web_backend;
+        proxy_pass http://<%= app[:name] %>_backend;
         proxy_redirect default;
     }
 }
-
-
-
-###########################################
-# GESEC - WEBAPP
-###########################################
-
-# Rate limit on login
-limit_req_zone "gesec_web_login_limit" zone=gesec_web_login_zone:1m rate=1r/s;
-
-# Upstream
-upstream gesec_web_backend {
-    server <%= ENV["GESEC_WEB_UPSTREAM_SERVER"] %> resolve;
-    keepalive 16;
-    zone gesec_web_backend 64k;
-}
-
-server {
-    server_name <%= ENV["GESEC_WEB_HOST"] %>;
-    listen <%= ENV["PORT"] %>;
-    charset utf-8;
-
-    # Enable modsecurity
-    modsecurity on;
-
-    # Performance improvement
-    proxy_http_version 1.1;
-    proxy_set_header Connection "";
-
-    # Proxy headers
-    proxy_set_header X-Forwarded-Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto https;
-
-    location <%= ENV["GESEC_WEB_ADMIN_LOGIN_PATH"] %> {
-        # Rate limit auth endpoint
-        limit_req zone=gesec_web_login_zone burst=3;
-        proxy_pass http://gesec_web_backend;
-        proxy_redirect default;
-    }
-    location / {
-        proxy_pass http://gesec_web_backend;
-        proxy_redirect default;
-    }
-}
-
-
-###########################################
-# SFTP - WEBAPP
-###########################################
-
-# Rate limit on login
-limit_req_zone "sftp_web_login_limit" zone=sftp_web_login_zone:1m rate=1r/s;
-
-# Upstream
-upstream sftp_web_backend {
-    server <%= ENV["SFTP_WEB_UPSTREAM_SERVER"] %> resolve;
-    keepalive 16;
-    zone sftp_web_backend 64k;
-}
-
-server {
-    server_name <%= ENV["SFTP_WEB_HOST"] %>;
-    listen <%= ENV["PORT"] %>;
-    charset utf-8;
-
-    # Enable modsecurity
-    modsecurity on;
-
-    # Performance improvement
-    proxy_http_version 1.1;
-    proxy_set_header Connection "";
-
-    # Proxy headers
-    proxy_set_header X-Forwarded-Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto https;
-
-    location <%= ENV["SFTP_WEB_ADMIN_LOGIN_PATH"] %> {
-        # Rate limit auth endpoint
-        limit_req zone=sftp_web_login_zone burst=3;
-        proxy_pass http://sftp_web_backend;
-        proxy_redirect default;
-    }
-    location / {
-        proxy_pass http://sftp_web_backend;
-        proxy_redirect default;
-    }
-}
-
-
-###########################################
-# N8N
-###########################################
-
-# Rate limit on login
-limit_req_zone "n8n_login_limit" zone=n8n_login_zone:1m rate=1r/s;
-
-# Upstream
-upstream n8n_backend {
-    server <%= ENV["N8N_UPSTREAM_SERVER"] %> resolve;
-    keepalive 16;
-    zone n8n_backend 64k;
-}
-
-server {
-    server_name <%= ENV["N8N_HOST"] %>;
-    listen <%= ENV["PORT"] %>;
-    charset utf-8;
-
-    # Enable modsecurity
-    modsecurity on;
-    modsecurity_rules_file /app/n8n_rules.txt;
-
-    # Performance improvement
-    proxy_http_version 1.1;
-    proxy_set_header Connection "";
-
-    # Proxy headers
-    proxy_set_header X-Forwarded-Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto https;
-
-    location <%= ENV["N8N_LOGIN_PATH"] %> {
-        # Rate limit auth endpoint
-        limit_req zone=n8n_login_zone burst=3;
-        proxy_pass http://n8n_backend;
-        proxy_redirect default;
-    }
-    location / {
-        proxy_pass http://n8n_backend;
-        proxy_redirect default;
-    }
-}
-
+<% end %>

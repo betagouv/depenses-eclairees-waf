@@ -13,6 +13,7 @@ export N8N_HOST=${N8N_HOST:-n8n.local}
 export DEPEC_WEB_HOST=${DEPEC_WEB_HOST:-depec-web.local}
 export GESEC_WEB_HOST=${GESEC_WEB_HOST:-gesec-web.local}
 export SFTP_WEB_HOST=${SFTP_WEB_HOST:-sftp-web.local}
+export METABASE_LOGIN_PATH=${METABASE_LOGIN_PATH:-"/auth/login"}
 export N8N_LOGIN_PATH=${N8N_LOGIN_PATH:-"/rest/login"}
 export DEPEC_WEB_ADMIN_LOGIN_PATH=${DEPEC_WEB_ADMIN_LOGIN_PATH:-"/admin/login"}
 export GESEC_WEB_ADMIN_LOGIN_PATH=${GESEC_WEB_ADMIN_LOGIN_PATH:-"/admin/login"}

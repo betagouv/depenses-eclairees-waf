@@ -5,8 +5,9 @@ applications, packaged as a Scalingo nginx-buildpack app.
 
 ## How it works
 
-`servers.conf.erb` is an ERB template with one `server` block per proxied
-application. At container start, `test/render-config.sh` compiles it to
+`servers.conf.erb` is an ERB template: the proxied applications are
+declared in an `apps` array and rendered as one `server` block each. At
+container start, `test/render-config.sh` compiles it to
 `/etc/nginx/conf.d/default.conf` before nginx starts. Never edit a
 generated `default.conf`: the template is the source of truth.
 
@@ -43,12 +44,11 @@ Rate-limited login paths:
 
 | Variable | Default |
 | --- | --- |
+| `METABASE_LOGIN_PATH` | `/auth/login` |
 | `N8N_LOGIN_PATH` | `/rest/login` |
 | `DEPEC_WEB_ADMIN_LOGIN_PATH` | `/admin/login` |
 | `GESEC_WEB_ADMIN_LOGIN_PATH` | `/admin/login` |
 | `SFTP_WEB_ADMIN_LOGIN_PATH` | `/admin/login` |
-
-Metabase's login path is hardcoded as `/auth/login` in `servers.conf.erb`.
 
 ## Testing
 
