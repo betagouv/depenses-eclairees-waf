@@ -63,3 +63,7 @@ The image is based on `owasp/modsecurity-crs:nginx` and installs
 command above prints the generated config and runs the config test. A bad
 template therefore fails fast without a real upstream. Run
 `docker run --rm waf` (optionally with `-p 8080:8080`) to start nginx.
+
+Login rate limiting can be checked against deployed endpoints with
+`test/rate-limit.sh <url-file>`, where the file lists one login URL per
+line (run it without arguments for all options).
