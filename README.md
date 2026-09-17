@@ -6,14 +6,14 @@ applications, packaged as a Scalingo nginx-buildpack app.
 ## How it works
 
 `servers.conf.erb` is an ERB template with one `server` block per proxied
-application. At container start, `docker-entrypoint.sh` compiles it to
+application. At container start, `test/docker-entrypoint.sh` compiles it to
 `/etc/nginx/conf.d/default.conf` and validates the result with `nginx -t`
 before starting nginx. Never edit a generated `default.conf`: the template
 is the source of truth.
 
 Per-application ModSecurity exceptions live in `<app>_rules.txt`, loaded
 with `modsecurity_rules_file`. Every rules file must also be added to the
-`COPY` list in the `Dockerfile`, otherwise startup fails.
+`COPY` list in `test/Dockerfile`, otherwise startup fails.
 
 ## Scalingo variables
 
@@ -53,9 +53,11 @@ Metabase's login path is hardcoded as `/auth/login` in `servers.conf.erb`.
 
 ## Testing
 
-No ruby/nginx locally; use Docker. The entrypoint prints the generated
-config and runs `nginx -t`, so a bad template fails fast without a real
-upstream:
+No ruby/nginx locally; use Docker. The test image lives in `test/`, so
+build it from the repository root where the config files are:
 
-    docker build -t waf .
+    docker build -t waf -f test/Dockerfile .
     docker run --rm waf
+
+The entrypoint prints the generated config and runs `nginx -t`, so a bad
+template fails fast without a real upstream.

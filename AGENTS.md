@@ -20,15 +20,16 @@ Copy an existing block (e.g. SFTP/GESEC) and keep the same structure:
 
 - Env var naming: `<APP>_HOST`, `<APP>_UPSTREAM_SERVER`,
   `<APP>_ADMIN_LOGIN_PATH` or `<APP>_LOGIN_PATH`. Add a default to
-  `docker-entrypoint.sh` when the app needs one, otherwise an unset var
-  renders an empty `location` and breaks `nginx -t`.
+  `test/docker-entrypoint.sh` when the app needs one, otherwise an unset
+  var renders an empty `location` and breaks `nginx -t`.
 - `SecRule` ids must be unique across the process. Reserved ranges:
   1000-1099 Metabase, 2000-2099 n8n.
-- A new rules file must be added to the `COPY` list in the `Dockerfile`.
+- A new rules file must be added to the `COPY` list in `test/Dockerfile`.
 - Comments in the nginx config are expected; keep them short.
 - Indentation in `servers.conf.erb` is 4 spaces.
 
 ## Testing
 
-Run `docker build -t waf . && docker run --rm waf` before finishing; the
-entrypoint runs `nginx -t` and fails fast on a bad template.
+Run `docker build -t waf -f test/Dockerfile . && docker run --rm waf`
+before finishing; the entrypoint runs `nginx -t` and fails fast on a bad
+template.

@@ -16,7 +16,7 @@ COPY metabase_rules.txt /app/metabase_rules.txt
 COPY n8n_rules.txt /app/n8n_rules.txt
 
 # Copy the entrypoint script
-COPY docker-entrypoint.sh /docker-entrypoint.sh
+COPY test/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
 # Expose the port (can be overridden by ENV)
