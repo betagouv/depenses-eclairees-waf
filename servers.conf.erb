@@ -45,7 +45,7 @@ server {
     modsecurity on;
     modsecurity_rules_file /app/metabase_rules.txt;
 
-    # Performances improvment
+    # Performance improvement
     proxy_http_version 1.1;
     proxy_set_header Connection "";
 
@@ -88,7 +88,7 @@ server {
     # Enable modsecurity
     modsecurity on;
 
-    # Performances improvment
+    # Performance improvement
     proxy_http_version 1.1;
     proxy_set_header Connection "";
 
@@ -134,7 +134,7 @@ server {
     # Enable modsecurity
     modsecurity on;
 
-    # Performances improvment
+    # Performance improvement
     proxy_http_version 1.1;
     proxy_set_header Connection "";
 
@@ -179,7 +179,7 @@ server {
     # Enable modsecurity
     modsecurity on;
 
-    # Performances improvment
+    # Performance improvement
     proxy_http_version 1.1;
     proxy_set_header Connection "";
 
@@ -197,6 +197,52 @@ server {
     }
     location / {
         proxy_pass http://sftp_web_backend;
+        proxy_redirect default;
+    }
+}
+
+
+###########################################
+# N8N
+###########################################
+
+# Rate limit on login
+limit_req_zone "n8n_login_limit" zone=n8n_login_zone:1m rate=1r/s;
+
+# Upstream
+upstream n8n_backend {
+    server <%= ENV["N8N_UPSTREAM_SERVER"] %> resolve;
+    keepalive 16;
+    zone n8n_backend 64k;
+}
+
+server {
+    server_name <%= ENV["N8N_HOST"] %>;
+    listen <%= ENV["PORT"] %>;
+    charset utf-8;
+
+    # Enable modsecurity
+    modsecurity on;
+    modsecurity_rules_file /app/n8n_rules.txt;
+
+    # Performance improvement
+    proxy_http_version 1.1;
+    proxy_set_header Connection "";
+
+    # Proxy headers
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto https;
+
+    location <%= ENV["N8N_LOGIN_PATH"] %> {
+        # Rate limit auth endpoint
+        limit_req zone=n8n_login_zone burst=3;
+        proxy_pass http://n8n_backend;
+        proxy_redirect default;
+    }
+    location / {
+        proxy_pass http://n8n_backend;
         proxy_redirect default;
     }
 }

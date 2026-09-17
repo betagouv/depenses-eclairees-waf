@@ -1,0 +1,8 @@
+# Authorize any method (put, patch, delete, ...) on /rest/ endpoint
+SecRule REQUEST_URI "@beginsWith /rest/" \
+    "id:2001,\
+    phase:1,\
+    t:none,\
+    pass,\
+    nolog,\
+    ctl:ruleRemoveById=911100"
