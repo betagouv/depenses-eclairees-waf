@@ -1,11 +1,17 @@
 # Dockerfile to test nginx modsecurity configuration
-# Uses nginx with modsecurity module
+# Uses the OWASP CRS nginx image (nginx with modsecurity module)
 
-FROM nginx/ngx_modsecurity:latest
+FROM owasp/modsecurity-crs:nginx
+
+USER root
 
 # Install ruby for ERB template processing
-RUN apt-get update 
-RUN apt-get install -y ruby 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ruby \
+    && rm -rf /var/lib/apt/lists/*
+
+# Our config provides its own resolver; nginx rejects a duplicate one
+RUN sed -i '/^    resolver /d' /etc/nginx/templates/nginx.conf.template
 
 # Create app directory
 RUN mkdir -p /app
@@ -15,14 +21,12 @@ COPY servers.conf.erb /app/servers.conf.erb
 COPY metabase_rules.txt /app/metabase_rules.txt
 COPY n8n_rules.txt /app/n8n_rules.txt
 
-# Copy the entrypoint script
-COPY test/docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
+# Render the config at startup. Numbered after the image entrypoint
+# hooks so nginx.conf and modsecurity are ready.
+COPY test/render-config.sh /docker-entrypoint.d/99-render-config.sh
+RUN chmod +x /docker-entrypoint.d/99-render-config.sh
 
 # Expose the port (can be overridden by ENV)
-EXPOSE 80
+EXPOSE 8080
 
-# Use our custom entrypoint
-ENTRYPOINT ["/docker-entrypoint.sh"]
-CMD ["nginx", "-g", "daemon off;"]
-
+USER nginx
