@@ -87,7 +87,11 @@ server {
     charset utf-8;
 
     # Enable modsecurity
-    modsecurity on;<%= app[:rules] ? "\n    modsecurity_rules_file /app/#{app[:rules]};" : "" %>
+    modsecurity on;
+    modsecurity_rules_file /app/common_rules.txt;
+    <% if app[:rules] %>
+      modsecurity_rules_file /app/<%= app[:rules] %>;
+    <% end %>
 
     # Performance improvement
     proxy_http_version 1.1;

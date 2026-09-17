@@ -12,7 +12,9 @@ container start, `test/render-config.sh` compiles it to
 generated `default.conf`: the template is the source of truth.
 
 Per-application ModSecurity exceptions live in `<app>_rules.txt`, loaded
-with `modsecurity_rules_file`. Every rules file must also be added to the
+with `modsecurity_rules_file`. `common_rules.txt` is shared: it is loaded
+for every app before the per-app file and currently drops PostHog cookies
+from CRS SQLi inspection. Every rules file must also be added to the
 `COPY` list in `test/Dockerfile`, otherwise startup fails.
 
 ## Scalingo variables

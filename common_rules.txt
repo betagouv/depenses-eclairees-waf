@@ -1,0 +1,3 @@
+# PostHog cookies carry JSON values that trip CRS SQLi rules. Exclude them
+# from inspection by every rule tagged attack-sqli.
+SecRuleUpdateTargetByTag "attack-sqli" "!REQUEST_COOKIES:/^ph_phc_.*_posthog$/"
