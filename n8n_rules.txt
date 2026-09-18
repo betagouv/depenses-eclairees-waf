@@ -6,3 +6,12 @@ SecRule REQUEST_URI "@beginsWith /rest/" \
     pass,\
     nolog,\
     ctl:ruleRemoveById=911100"
+
+# n8n editor lists credential types via /types/credentials.json; CRS sees a restricted file
+SecRule REQUEST_FILENAME "@streq /types/credentials.json" \
+    "id:2002,\
+    phase:1,\
+    t:none,\
+    pass,\
+    nolog,\
+    ctl:ruleRemoveTargetById=930130;REQUEST_FILENAME"
