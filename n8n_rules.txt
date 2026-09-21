@@ -15,3 +15,13 @@ SecRule REQUEST_FILENAME "@streq /types/credentials.json" \
     pass,\
     nolog,\
     ctl:ruleRemoveTargetById=930130;REQUEST_FILENAME"
+
+# Credential arg names trip rule 930120 on ".credentials" from
+# lfi-os-files.data; drop ARGS_NAMES from 930120 on this route only.
+SecRule REQUEST_URI "@beginsWith /rest/credentials/" \
+    "id:2003,\
+    phase:1,\
+    t:none,\
+    pass,\
+    nolog,\
+    ctl:ruleRemoveTargetById=930120;ARGS_NAMES"

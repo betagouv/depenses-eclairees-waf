@@ -26,6 +26,9 @@ Add defaults for any new env var to `test/render-config.sh`.
   var renders an empty `location` and breaks `nginx -t`.
 - `SecRule` ids must be unique across the process. Reserved ranges:
   1000-1099 Metabase, 2000-2099 n8n.
+- Use CRS rule ids (`ruleRemoveById`, `ruleRemoveTargetById`) when exactly
+  one rule or target must be exempted; use tags (`ruleRemoveByTag`,
+  `ruleRemoveTargetByTag`) only for whole-group exceptions.
 - A new rules file must be added to the `COPY` list in `test/Dockerfile`.
 - ModSecurity concatenates the rules files of a server, so every rules
   file must end with a newline or the next file's first line is merged.
