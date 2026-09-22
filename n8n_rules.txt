@@ -25,3 +25,19 @@ SecRule REQUEST_URI "@beginsWith /rest/credentials/" \
     pass,\
     nolog,\
     ctl:ruleRemoveTargetById=930120;ARGS_NAMES"
+
+# Saving a workflow ships each Code node's JavaScript in jsCode; the
+# "function" keyword in it then trips CRS RCE rules (ex: 932235). Whole
+# workflow bodies are user-authored code and data, so exempt the RCE,
+# SQLi and PHP tags on ARGS for this route only. The node index in the
+# argument names varies with every workflow, so no single rule target
+# can cover them.
+SecRule REQUEST_URI "@beginsWith /rest/workflows" \
+    "id:2004,\
+    phase:1,\
+    t:none,\
+    pass,\
+    nolog,\
+    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-RCE;ARGS,\
+    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-SQLI;ARGS,\
+    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-PHP;ARGS"
