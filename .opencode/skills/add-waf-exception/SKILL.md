@@ -43,6 +43,7 @@ Pour chaque `ModSecurity: Warning.` relevé, noter :
   `ARGS:<champ>`, ...) ;
 - `[file "..."]` + `[line "..."]` : fichier CRS et ligne ;
 - `[tag "..."]` : groupes (ex. `OWASP_CRS/ATTACK-LFI`) ;
+- `[ver "OWASP_CRS/x.y.z"]` : version CRS déployée, utilisée étape 3 ;
 - `[hostname "..."]` : l'app.
 
 Vérifier que la requête est légitime : si le trafic est manifestement du
@@ -52,23 +53,45 @@ exotiques), ne pas exempter — l'expliquer à l'utilisateur.
 Si le bloc n'est pas dans `logs.txt`, demander des logs frais (rejouer la
 route).
 
-## 3. Détail de la règle et du groupe
+## 3. Détail de la règle et de son groupe
 
-Extraire la règle depuis l'image de test (même CRS que le déploiement) :
+`test/crs-rule.sh` met en cache la version déployée de CRS (lue dans
+`[ver "..."]` des logs) et imprime la règle :
 
-    docker run --rm --entrypoint sh waf -c \
-      'grep -n "id:<ID>" -A 30 /opt/owasp-crs/rules/<REQUEST-XXX-...conf>'
+    test/crs-rule.sh <id>                     # version auto depuis logs.txt
+    test/crs-rule.sh <id> --version <x.y.z>   # version forcée
+    test/crs-rule.sh --path                   # dossier rules/ en cache
 
-Au déploiement Scalingo, le même fichier est sous
-`/app/vendor/nginx/conf/crs/rules/`.
+Relever dans le bloc : cible(s) (`SecRule <VAR>`), `phase`,
+`paranoia-level`, tags, sévérité, `msg`, et le rôle de la règle (déduit du
+commentaire CRS qui la précède). Explorer le groupe et les règles voisines
+depuis le dossier en cache :
 
-Relever cibles, `phase`, `paranoia-level`, tags, sévérité, et les règles
-voisines du même groupe qui matchent aussi la route.
+    rules=$(test/crs-rule.sh --path)
+    rg -n "tag:'<OWASP_CRS/GROUPE>'" "$rules"
 
-## 4. Choisir la stratégie
+## 4. Rapport et choix de la stratégie
 
-Appliquer AGENTS.md : id quand une seule règle/cible doit être exemptée,
-tag seulement pour un groupe entier. Du plus étroit au plus large :
+Avant de poser la question du choix, présenter un rapport :
+
+1. **Route bloquée** : méthode + chemin, app, ce que fait la requête
+   d'après les logs (corps, user-agent, en-têtes) et pourquoi c'est
+   légitime.
+2. **Règle déclenchée** : id, fichier + ligne, `msg`, `data`, cible
+   (`against variable`), `phase`, `paranoia-level`, sévérité ; ce qu'elle
+   couvre et à quoi elle sert.
+3. **Groupe de la règle** : tag `OWASP_CRS/...`, thème couvert, nombre de
+   règles du groupe et celles qui pourraient aussi matcher la route.
+4. **Règles existantes pour cette route** : les `SecRule` des
+   `*_rules.txt` dont l'URI ou un préfixe matche la route ; préciser si
+   l'une couvre déjà le cas (à étendre) ou si c'est un doublon.
+5. **Exemptions similaires déjà en place** : exemptions du même
+   groupe/tag, dans l'app et ailleurs
+   (`rg -n "ruleRemove" *_rules.txt`), pour réutiliser la même portée.
+
+Puis appliquer AGENTS.md : id quand une seule règle/cible doit être
+exemptée, tag seulement pour un groupe entier. Du plus étroit au plus
+large :
 
 | Scénario | Portée | `ctl` |
 | --- | --- | --- |
@@ -79,9 +102,8 @@ tag seulement pour un groupe entier. Du plus étroit au plus large :
 | Règle existante | route déjà couverte | compléter ses `ctl:*` |
 | Toutes les apps | transverse | `SecRuleUpdateTargetByTag` dans `common_rules.txt` |
 
-Vérifier d'abord si une `SecRule` du fichier app couvre déjà la route
-(par ex. n8n 2004 couvre tout `/rest/` sauf exclusions) : préférer
-l'étendre plutôt que créer une règle.
+Si une règle existante couvre déjà la route (ex. n8n 2004 couvre tout
+`/rest/` sauf exclusions), la préférer à une nouvelle `SecRule`.
 
 Détailler à l'utilisateur 2 à 4 scénarios retenus (portée exacte, risque
 résiduel, extrait `SecRule`, effet sur les routes voisines), puis faire
@@ -130,9 +152,9 @@ qu'une route voisine reste bloquée avec un vrai payload d'attaque.
 
 ## 7. Commit
 
-Montrer `git diff` et `git status` ; ne pas committer `logs.txt` (fichier
-de travail non suivi). Commiter uniquement les fichiers modifiés, avec un
-message impératif au style du repo :
+Montrer `git diff` et `git status` (`logs.txt` et `test/.cache/` sont
+déjà ignorés). Commiter uniquement les fichiers modifiés, avec un message
+impératif au style du repo :
 
     Exempt <app> <route> from CRS <group>
 

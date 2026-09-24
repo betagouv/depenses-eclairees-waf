@@ -79,3 +79,11 @@ Run `docker build -t waf -f test/Dockerfile .` then
 `docker run --rm waf nginx -T` before finishing; it prints the generated
 config and fails fast on a bad template. Run `docker run --rm waf` to
 start nginx.
+
+CRS rule lookups for exceptions use `test/crs-rule.sh <rule-id>`: it
+reads the deployed CRS version from `logs.txt` (`[ver "..."]` in the
+ModSecurity lines), caches the matching coreruleset release under
+`test/.cache/crs/` and prints the rule. `--version X.Y.Z` forces a
+version, `--path` prints the cached rules directory (for group
+searches), `--refresh` drops the cache before fetching. Run it without
+arguments for usage.

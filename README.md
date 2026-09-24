@@ -69,3 +69,13 @@ template therefore fails fast without a real upstream. Run
 Login rate limiting can be checked against deployed endpoints with
 `test/rate-limit.sh <url-file>`, where the file lists one login URL per
 line (run it without arguments for all options).
+
+CRS rule lookups for WAF exceptions use `test/crs-rule.sh <rule-id>`:
+
+    test/crs-rule.sh 930130
+
+The script reads the CRS version from `logs.txt` (the `[ver "..."]` field
+of the ModSecurity log lines), downloads the matching coreruleset release
+once and caches it under `test/.cache/crs/`. Pass `--version X.Y.Z` to
+override the version, `--path` to print the cached rules directory,
+`--refresh` to refetch, or run it without arguments for usage.
