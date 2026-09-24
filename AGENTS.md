@@ -18,6 +18,42 @@ loop renders its rate limit, upstream and `server` block:
 
 Add defaults for any new env var to `test/render-config.sh`.
 
+## Updating the n8n `/rest/` exemption
+
+`n8n_rules.txt` rule 2004 exempts the RCE/SQLi/PHP/LFI tags on `ARGS` and
+`ARGS_NAMES` for all of `/rest/`, except an exclusion list (login, account
+recovery, SSO/OAuth callbacks, api-keys, e2e/debug, instance-ai gateway).
+n8n adds routes over time: recheck the list after every n8n upgrade.
+
+1. Deployed version: `GET https://<n8n-host>/rest/settings` (`versionCli`),
+   or the n8n image tag.
+2. List upstream routes for that tag (URL-encode `@` as `%40`):
+
+       curl -s "https://api.github.com/repos/n8n-io/n8n/git/trees/n8n%40<version>?recursive=1" \
+         | jq -r '.tree[].path' | grep -E 'cli/src/.*\.ts$'
+
+3. Public routes are those registered with `skipAuth` /
+   `allowUnauthenticated`, plus static routers (e.g. `/rest/ph`). Look at:
+   - `packages/cli/src/controllers/*.controller.ts` (`@RestController`,
+     `@Get/@Post/@Put/@Patch/@Delete`)
+   - `packages/cli/src/server.ts` and `abstract-server.ts` (non-decorated
+     mounts)
+   - `packages/cli/src/middlewares/*auth*.ts` (how auth is applied)
+   - `packages/cli/src/modules/**` (SSO, instance-ai, agents, source
+     control, external secrets...)
+
+       rg -n "skipAuth|allowUnauthenticated" packages/cli/src
+       rg -n "@(Get|Post|Put|Patch|Delete)\(" packages/cli/src/controllers
+
+4. Diff with the exclusion regex in rule 2004: add any new unauthenticated
+   account/SSO/test route that receives user input. Everything else under
+   `/rest/` stays exempted.
+5. Validate: `docker build -t waf -f test/Dockerfile .` then
+   `docker run --rm waf nginx -T` (ModSecurity compiles the regex at
+   startup, a bad one fails fast). Smoke test: an exempt route with a
+   `{"credentials":{...}}` body must not return 403, and `/rest/login`
+   with an SQLi payload must still return 403.
+
 ## Conventions
 
 - Env var naming: `<APP>_HOST`, `<APP>_UPSTREAM_SERVER`,

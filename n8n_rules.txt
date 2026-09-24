@@ -16,26 +16,17 @@ SecRule REQUEST_FILENAME "@streq /types/credentials.json" \
     nolog,\
     ctl:ruleRemoveTargetById=930130;REQUEST_FILENAME"
 
-# Credential arg names trip rule 930120 on ".credentials" from
-# lfi-os-files.data; drop ARGS_NAMES from 930120 on this route only.
-SecRule REQUEST_URI "@beginsWith /rest/credentials/" \
-    "id:2003,\
-    phase:1,\
-    t:none,\
-    pass,\
-    nolog,\
-    ctl:ruleRemoveTargetById=930120;ARGS_NAMES"
-
-# Saving a workflow ships each Code node's JavaScript in jsCode; the
-# "function" keyword in it then trips CRS RCE rules (ex: 932235), and
-# credential references (json.nodes.array_3.credentials.gristApi.id)
-# trip the LFI rule 930120 on ".credentials" from lfi-os-files.data.
-# Whole workflow bodies are user-authored code and data, so exempt the
-# RCE, SQLi, PHP and LFI tags on ARGS and ARGS_NAMES for this route only.
-# ARGS_NAMES is needed because JSON keys become argument names, and the
-# node index varies with every workflow so no single rule target covers
-# them.
-SecRule REQUEST_URI "@beginsWith /rest/workflows" \
+# n8n's /rest/ API is authenticated and its bodies are user-authored
+# content (workflow JS, SQL, node params, credential refs), so CRS
+# injection rules always fire: 930120 on ".credentials" arg names (JSON
+# keys become arg names), 932* on jsCode, etc. Exempt the RCE, SQLi, PHP
+# and LFI tags on ARGS and ARGS_NAMES for the whole API. Auth and
+# SSO/OAuth routes, api-keys, test-only routes (e2e, debug) and the
+# instance-ai gateway stay inspected; /rest/login is also the
+# rate-limited login endpoint. The exclusion list tracks n8n's
+# unauthenticated routes and must be rechecked on n8n upgrades; see
+# "Updating the n8n /rest/ exemption" in AGENTS.md.
+SecRule REQUEST_URI "@rx ^/rest/(?!login|api-keys|forgot-password|change-password|resolve-signup-token|resolve-password-token|resolve-change-email-token|confirm-email-change|change-email|owner/setup|invitations|sso|auth|oauth1-credential|oauth2-credential|e2e|debug|instance-ai/gateway)" \
     "id:2004,\
     phase:1,\
     t:none,\
@@ -45,4 +36,7 @@ SecRule REQUEST_URI "@beginsWith /rest/workflows" \
     ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-SQLI;ARGS,\
     ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-PHP;ARGS,\
     ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-LFI;ARGS,\
+    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-RCE;ARGS_NAMES,\
+    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-SQLI;ARGS_NAMES,\
+    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-PHP;ARGS_NAMES,\
     ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-LFI;ARGS_NAMES"
