@@ -32,14 +32,18 @@ SecRule REQUEST_URI "@beginsWith /api/dataset" \
     ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-PHP;ARGS:query"
 
 
-# Save question
+# Save question: the JSON body holds user-authored SQL (dataset_query)
+# and Metabase-generated type strings in result_metadata (base_type,
+# effective_type, field_ref.base-type) such as "type/*" that libinjection
+# flags. Exempt every arg from the SQLi, RCE and PHP checks; other
+# endpoints, ARGS_NAMES and the other CRS groups stay inspected.
 SecRule REQUEST_URI "@beginsWith /api/card" \
     "id:1004,\
     phase:1,\
     t:none,\
     pass,\
     nolog,\
-    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-SQLI;ARGS:json.dataset_query.stages.array_0.native,\
-    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-RCE;ARGS:json.dataset_query.stages.array_0.native,\
-    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-PHP;ARGS:json.dataset_query.stages.array_0.native"
+    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-SQLI;ARGS,\
+    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-RCE;ARGS,\
+    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-PHP;ARGS"
 
