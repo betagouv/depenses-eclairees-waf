@@ -15,6 +15,8 @@ loop renders its rate limit, upstream and `server` block:
    `<APP>_UPSTREAM_SERVER`.
 4. `login_path` comes from `<APP>_ADMIN_LOGIN_PATH` or `<APP>_LOGIN_PATH`.
 5. `rules` is `<app>_rules.txt` when CRS breaks the app, else `nil`.
+6. `block_paths` (optional) lists URI prefixes rejected with a hard 403
+   before CRS runs, for noisy routes that never reach the app.
 
 Add defaults for any new env var to `test/render-config.sh`.
 

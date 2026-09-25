@@ -55,6 +55,7 @@ apps = [
         upstream: ENV["N8N_UPSTREAM_SERVER"],
         login_path: ENV["N8N_LOGIN_PATH"],
         rules: "n8n_rules.txt",
+        block_paths: ["/rest/ph/"],
     },
 ]
 %>
@@ -111,6 +112,13 @@ server {
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto https;
 
+    <% Array(app[:block_paths]).each do |path| %>
+    # Reject before CRS: the PostHog proxy body is text/plain, which trips 920420
+    location ^~ <%= path %> {
+        modsecurity off;
+        return 403;
+    }
+    <% end %>
     location <%= app[:login_path] %> {
         # Rate limit auth endpoint
         limit_req zone=<%= app[:name] %>_login_zone burst=3;
