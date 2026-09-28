@@ -22,9 +22,10 @@ Add defaults for any new env var to `test/render-config.sh`.
 
 ## Updating the n8n `/rest/` exemption
 
-`n8n_rules.txt` rule 2004 exempts the RCE/SQLi/PHP/LFI tags on `ARGS` and
-`ARGS_NAMES` for all of `/rest/`, except an exclusion list (login, account
-recovery, SSO/OAuth callbacks, api-keys, e2e/debug, instance-ai gateway).
+`n8n_rules.txt` rule 2004 exempts the RCE/GENERIC/SQLi/PHP/LFI tags on
+`ARGS` and `ARGS_NAMES` for all of `/rest/`, except an exclusion list
+(login, account recovery, SSO/OAuth callbacks, api-keys, e2e/debug,
+instance-ai gateway).
 n8n adds routes over time: recheck the list after every n8n upgrade.
 
 1. Deployed version: `GET https://<n8n-host>/rest/settings` (`versionCli`),
