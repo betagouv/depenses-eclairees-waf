@@ -19,9 +19,9 @@ SecRule REQUEST_FILENAME "@streq /types/credentials.json" \
 # n8n's /rest/ API is authenticated and its bodies are user-authored
 # content (workflow JS, SQL, node params, credential refs), so CRS
 # injection rules always fire: 930120 on ".credentials" arg names (JSON
-# keys become arg names), 932* on jsCode, 934100 on console.warn in
-# Code nodes, etc. Exempt the RCE, GENERIC, SQLi, PHP and LFI tags on
-# ARGS and ARGS_NAMES for the whole API. Auth and
+# keys become arg names), 932* and 941390 on jsCode, 934100 on
+# console.warn in Code nodes, etc. Exempt the RCE, GENERIC, SQLi, PHP,
+# LFI and XSS tags on ARGS and ARGS_NAMES for the whole API. Auth and
 # SSO/OAuth routes, api-keys, test-only routes (e2e, debug) and the
 # instance-ai gateway stay inspected; /rest/login is also the
 # rate-limited login endpoint. The exclusion list tracks n8n's
@@ -38,8 +38,10 @@ SecRule REQUEST_URI "@rx ^/rest/(?!login|api-keys|forgot-password|change-passwor
     ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-PHP;ARGS,\
     ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-LFI;ARGS,\
     ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-GENERIC;ARGS,\
+    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-XSS;ARGS,\
     ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-RCE;ARGS_NAMES,\
     ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-SQLI;ARGS_NAMES,\
     ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-PHP;ARGS_NAMES,\
     ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-LFI;ARGS_NAMES,\
-    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-GENERIC;ARGS_NAMES"
+    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-GENERIC;ARGS_NAMES,\
+    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-XSS;ARGS_NAMES"
