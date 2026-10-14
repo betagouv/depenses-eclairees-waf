@@ -64,7 +64,7 @@ n8n adds routes over time: recheck the list after every n8n upgrade.
   `test/render-config.sh` when the app needs one, otherwise an unset
   var renders an empty `location` and breaks `nginx -t`.
 - `SecRule` ids must be unique across the process. Reserved ranges:
-  1000-1099 Metabase, 2000-2099 n8n.
+  1000-1099 Metabase, 2000-2099 n8n, 3000-3099 MCP.
 - Use CRS rule ids (`ruleRemoveById`, `ruleRemoveTargetById`) when exactly
   one rule or target must be exempted; use tags (`ruleRemoveByTag`,
   `ruleRemoveTargetByTag`) only for whole-group exceptions.

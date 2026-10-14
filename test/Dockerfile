@@ -21,6 +21,7 @@ COPY servers.conf.erb /app/servers.conf.erb
 COPY common_rules.txt /app/common_rules.txt
 COPY metabase_rules.txt /app/metabase_rules.txt
 COPY n8n_rules.txt /app/n8n_rules.txt
+COPY mcp_rules.txt /app/mcp_rules.txt
 
 # Render the config at startup. Numbered after the image entrypoint
 # hooks so nginx.conf and modsecurity are ready.

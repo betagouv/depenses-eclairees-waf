@@ -1,0 +1,44 @@
+# Serveur MCP streamable-HTTP (JSON-RPC, SSE, DELETE). Le body porte du
+# contenu utilisateur arbitraire : les clés JSON deviennent des ARGS_NAMES
+# et les valeurs (URL, chemins, extraits) déclenchent les règles
+# d'injection. Même périmètre d'exemption que n8n 2004.
+
+# DELETE /mcp termine la session ; absent de tx.allowed_methods.
+SecRule REQUEST_URI "@beginsWith /mcp" \
+    "id:3001,\
+    phase:1,\
+    t:none,\
+    pass,\
+    nolog,\
+    ctl:ruleRemoveById=911100"
+
+# Accept: application/json, text/event-stream négocie le SSE ; le
+# content-type entrant reste application/json, cette exemption est
+# inoffensive mais conservée par précaution protocolaire.
+SecRule REQUEST_URI "@beginsWith /mcp" \
+    "id:3002,\
+    phase:1,\
+    t:none,\
+    pass,\
+    nolog,\
+    ctl:ruleRemoveById=920420"
+
+# Body JSON-RPC : exempte les tags d'injection sur ARGS et ARGS_NAMES.
+SecRule REQUEST_URI "@beginsWith /mcp" \
+    "id:3003,\
+    phase:1,\
+    t:none,\
+    pass,\
+    nolog,\
+    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-RCE;ARGS,\
+    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-SQLI;ARGS,\
+    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-PHP;ARGS,\
+    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-LFI;ARGS,\
+    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-GENERIC;ARGS,\
+    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-XSS;ARGS,\
+    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-RCE;ARGS_NAMES,\
+    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-SQLI;ARGS_NAMES,\
+    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-PHP;ARGS_NAMES,\
+    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-LFI;ARGS_NAMES,\
+    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-GENERIC;ARGS_NAMES,\
+    ctl:ruleRemoveTargetByTag=OWASP_CRS/ATTACK-XSS;ARGS_NAMES"
