@@ -31,6 +31,7 @@ Upstream servers (`host:port`), one per application:
 | `DEPEC_WEB_UPSTREAM_SERVER` | `depec-web:8000` |
 | `GESEC_WEB_UPSTREAM_SERVER` | `gesec-web:8000` |
 | `SFTP_WEB_UPSTREAM_SERVER` | `sftp-web:8000` |
+| `MCP_UPSTREAM_SERVER` | `mcp:9000` |
 
 Public hosts:
 
@@ -41,6 +42,7 @@ Public hosts:
 | `DEPEC_WEB_HOST` | `depec-web.local` |
 | `GESEC_WEB_HOST` | `gesec-web.local` |
 | `SFTP_WEB_HOST` | `sftp-web.local` |
+| `MCP_HOST` | `mcp.local` |
 
 Rate-limited login paths:
 

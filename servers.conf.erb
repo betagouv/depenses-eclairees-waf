@@ -57,6 +57,14 @@ apps = [
         rules: "n8n_rules.txt",
         block_paths: ["/rest/ph/"],
     },
+    {
+        title: "MCP",
+        name: "mcp",
+        host: ENV["MCP_HOST"],
+        upstream: ENV["MCP_UPSTREAM_SERVER"],
+        login_path: nil,
+        rules: nil,
+    },
 ]
 %>
 ###########################################
@@ -119,12 +127,14 @@ server {
         return 403;
     }
     <% end %>
+    <% if app[:login_path] %>
     location <%= app[:login_path] %> {
         # Rate limit auth endpoint
         limit_req zone=<%= app[:name] %>_login_zone burst=3;
         proxy_pass http://<%= app[:name] %>_backend;
         proxy_redirect default;
     }
+    <% end %>
     location / {
         proxy_pass http://<%= app[:name] %>_backend;
         proxy_redirect default;
