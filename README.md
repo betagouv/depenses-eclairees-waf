@@ -22,6 +22,16 @@ from CRS SQLi inspection. Every rules file must also be added to the
     BUILDPACK_URL=https://github.com/Scalingo/nginx-buildpack.git
     ENABLE_MODSECURITY=true
 
+ModSecurity body size (read by the base image at container start):
+
+    MODSEC_REQ_BODY_NOFILES_LIMIT=4194304
+
+n8n workflow saves send the whole workflow as a JSON `PATCH` body; any
+workflow over the image default (128 KB) fails ModSecurity request body
+parsing and is rejected with a 400 (rule 200002) before CRS runs. Raise
+`MODSEC_REQ_BODY_NOFILES_LIMIT` to cover the largest workflows (4 MB
+leaves room for growth) and keep `MODSEC_REQ_BODY_LIMIT` above it.
+
 Upstream servers (`host:port`), one per application:
 
 | Variable | Default |
