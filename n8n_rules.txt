@@ -1,3 +1,9 @@
+# n8n sends the whole workflow as a JSON body on save; over the 128 KB
+# default the request body parser fails and the request is rejected with
+# a 400 (rule 200002) before CRS runs. Raise the no-files body limit for
+# this app.
+SecRequestBodyNoFilesLimit 4194304
+
 # Authorize any method (put, patch, delete, ...) on /rest/ endpoint
 SecRule REQUEST_URI "@beginsWith /rest/" \
     "id:2001,\
